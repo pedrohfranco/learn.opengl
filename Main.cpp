@@ -23,6 +23,9 @@ GLuint indices[] =
 	5, 4, 1 // Lower right triangle
 };
 
+float swapUniform() {
+	return sin(glfwGetTime());
+}
 
 int main() {
 	//Inicializando a janela do OpenGL
@@ -70,7 +73,7 @@ int main() {
 		glClearColor(r, g, b, 1.00f);
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderProgram.Activate();
-		glUniform1f(uniID1, 0.2f);
+		glUniform1f(uniID1, swapUniform());
 		vao.Bind();
 		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);

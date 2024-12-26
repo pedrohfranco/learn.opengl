@@ -14,8 +14,9 @@ class VFShader {
 public:
 	GLuint ID;
 	VFShader(const char* vertexFile, const char* fragmFile);
-	void Activate();
-	void Delete();
+	void Activate() const;
+	void Delete() const;
+	void compileErrors(GLuint shader, const char* type);
 };
 
 #endif
