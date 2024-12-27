@@ -47,13 +47,16 @@ int main() {
 	glViewport(0, 0, 800, 800);
 	
 	float r, g, b;
-	r = 0.25f;
-	g = 0.33f;
-	b = 0.75f;
+	r = 1.0f;
+	g = 1.0f;
+	b = 1.0f;
 
 	VFShader shaderProgram = VFShader("default.vert", "default.frag");
+	stbi_set_flip_vertically_on_load(true);
 	GLuint uniID1 = glGetUniformLocation(shaderProgram.ID, "scale");
 	GLuint tex0Uni = glGetUniformLocation(shaderProgram.ID, "tex0");
+	shaderProgram.Activate();
+	glUniform1i(tex0Uni, 0);
 	 
 	VAO vao;
 	vao.Bind();
@@ -70,7 +73,7 @@ int main() {
 
 	//Textures
 	int imgHeight, imgWidth, numColCh;
-	unsigned char* bytes = stbi_load("orquideas1.jpg", &imgWidth, &imgHeight, &numColCh, 0);
+	unsigned char* bytes = stbi_load("texture1.jpeg", &imgWidth, &imgHeight, &numColCh, 0);
 
 	GLuint textures;
 	glGenTextures(1, &textures);
@@ -84,14 +87,13 @@ int main() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgWidth, imgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgWidth, imgHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, bytes);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	stbi_image_free(bytes);
-	glBindTexture(GL_TEXTURE0, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 
-	shaderProgram.Activate();
-	glUniform1i(tex0Uni, 0);
 
 	//Loop de atualização da janela
 	while (!glfwWindowShouldClose(window)) {
@@ -101,7 +103,7 @@ int main() {
 		glUniform1f(uniID1, swapUniform());
 		glBindTexture(GL_TEXTURE_2D, textures);
 		vao.Bind();
-		glDrawElements(GL_TRIANGLES, 4, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -109,6 +111,7 @@ int main() {
 	vao.Delete();
 	vbo.Delete();
 	ebo.Delete();
+	glDeleteTextures(1, &textures);
 	shaderProgram.Delete();
 
 	glfwDestroyWindow(window);

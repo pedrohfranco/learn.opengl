@@ -39,7 +39,7 @@
     <ClCompile Include="VAO.cpp">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
-    <ClCompile Include="stb_image.cpp">
+    <ClCompile Include="stb.cpp">
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
   </ItemGroup>
@@ -67,6 +67,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="orquideas1.jpg">
+      <Filter>Arquivos de Recurso\Textures</Filter>
+    </Image>
+    <Image Include="texture1.jpeg">
       <Filter>Arquivos de Recurso\Textures</Filter>
     </Image>
   </ItemGroup>
