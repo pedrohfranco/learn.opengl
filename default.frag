@@ -2,9 +2,12 @@
 out vec4 FragColor;
 
 in vec3 color;
+in vec2 textCoord;
 uniform float scale;
+uniform sampler2D tex0;
 
 void main()
 {
-   FragColor = vec4((1.0f - color) * (1 + scale), 1.0f);
+   FragColor = texture(tex0, textCoord);
+
 }

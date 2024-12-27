@@ -5,22 +5,20 @@
 #include "VAO.h"
 #include "VBO.h"
 #include "EBO.h"
+#include "stb/stb_image.h"
 
 GLfloat vertices[] =
-{ //               COORDINATES                  /     COLORS           //
-	-0.5f, -0.5f * float(sqrt(3)) * 1 / 3, 0.0f,     0.8f, 0.3f,  0.02f, // Lower left corner
-	 0.5f, -0.5f * float(sqrt(3)) * 1 / 3, 0.0f,     0.8f, 0.3f,  0.02f, // Lower right corner
-	 0.0f,  0.5f * float(sqrt(3)) * 2 / 3, 0.0f,     1.0f, 0.6f,  0.32f, // Upper corner
-	-0.25f, 0.5f * float(sqrt(3)) * 1 / 6, 0.0f,     0.9f, 0.45f, 0.17f, // Inner left
-	 0.25f, 0.5f * float(sqrt(3)) * 1 / 6, 0.0f,     0.9f, 0.45f, 0.17f, // Inner right
-	 0.0f, -0.5f * float(sqrt(3)) * 1 / 3, 0.0f,     0.8f, 0.3f,  0.02f  // Inner down
+{ // COORDINATES           /     COLORS           //
+	-0.5f,  0.5f, 0.0f,     1.0f, 0.0f,  0.0f,    0.0f, 0.0f,// Canto superior esquerdo
+	 0.5f,  0.5f, 0.0f,    0.0f, 0.0f,  1.0f,    0.0f, 1.0f,// Canto superior direito
+	-0.5f, -0.5f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f,// Canto inferior esquerdo
+	 0.5f, -0.5f, 0.0f,    0.0f, 1.0f,  0.0f,   1.0f, 0.0f// Canto inferior direito
 };
 
 GLuint indices[] =
 {
-	0, 3, 5, // Lower left triangle
-	3, 2, 4, // Upper triangle
-	5, 4, 1 // Lower right triangle
+	2, 3, 1, // Triângulo inferior
+	0, 2, 1, // Triângulo superior
 };
 
 float swapUniform() {
@@ -55,6 +53,7 @@ int main() {
 
 	VFShader shaderProgram = VFShader("default.vert", "default.frag");
 	GLuint uniID1 = glGetUniformLocation(shaderProgram.ID, "scale");
+	GLuint tex0Uni = glGetUniformLocation(shaderProgram.ID, "tex0");
 	 
 	VAO vao;
 	vao.Bind();
@@ -62,11 +61,37 @@ int main() {
 	VBO vbo(vertices, sizeof(vertices));
 	EBO ebo(indices, sizeof(indices));
 
-	vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0); //Positions
-	vao.LinkAttrib(vbo, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3*sizeof(float))); //Colors
+	vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0); //Positions
+	vao.LinkAttrib(vbo, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3*sizeof(float))); //Colors
+	vao.LinkAttrib(vbo, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6*sizeof(float))); //Colors
 	vao.Unbind();
 	vbo.Unbind();
 	ebo.Unbind();
+
+	//Textures
+	int imgHeight, imgWidth, numColCh;
+	unsigned char* bytes = stbi_load("orquideas1.jpg", &imgWidth, &imgHeight, &numColCh, 0);
+
+	GLuint textures;
+	glGenTextures(1, &textures);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textures);
+
+	//Texture parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, imgWidth, imgHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	stbi_image_free(bytes);
+	glBindTexture(GL_TEXTURE0, 0);
+
+	shaderProgram.Activate();
+	glUniform1i(tex0Uni, 0);
 
 	//Loop de atualização da janela
 	while (!glfwWindowShouldClose(window)) {
@@ -74,8 +99,9 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderProgram.Activate();
 		glUniform1f(uniID1, swapUniform());
+		glBindTexture(GL_TEXTURE_2D, textures);
 		vao.Bind();
-		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 4, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
