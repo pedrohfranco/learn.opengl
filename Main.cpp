@@ -5,7 +5,7 @@
 #include "VAO.h"
 #include "VBO.h"
 #include "EBO.h"
-#include "stb/stb_image.h"
+#include "Texture2D.h"
 
 GLfloat vertices[] =
 { // COORDINATES           /     COLORS           //
@@ -21,7 +21,7 @@ GLuint indices[] =
 	0, 2, 1, // Triângulo superior
 };
 
-float swapUniform() {
+double swapUniform() {
 	return sin(glfwGetTime());
 }
 
@@ -52,12 +52,11 @@ int main() {
 	b = 1.0f;
 
 	VFShader shaderProgram = VFShader("default.vert", "default.frag");
-	stbi_set_flip_vertically_on_load(true);
 	GLuint uniID1 = glGetUniformLocation(shaderProgram.ID, "scale");
 	GLuint tex0Uni = glGetUniformLocation(shaderProgram.ID, "tex0");
 	shaderProgram.Activate();
 	glUniform1i(tex0Uni, 0);
-	 
+
 	VAO vao;
 	vao.Bind();
 
@@ -72,28 +71,18 @@ int main() {
 	ebo.Unbind();
 
 	//Textures
-	int imgHeight, imgWidth, numColCh;
-	unsigned char* bytes = stbi_load("texture1.jpeg", &imgWidth, &imgHeight, &numColCh, 0);
+	Texture2D texture("texture1.jpeg", 0);
+	texture.SetActive(0);
+	texture.Bind();
 
-	GLuint textures;
-	glGenTextures(1, &textures);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, textures);
+	texture.Parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	texture.Parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	texture.Parameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+	texture.Parameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	//Texture parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgWidth, imgHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, bytes);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	stbi_image_free(bytes);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
+	texture.SpecifyTex(0, 0, GL_RGB, GL_RGB);
+	texture.Unbind();
 
 	//Loop de atualização da janela
 	while (!glfwWindowShouldClose(window)) {
@@ -101,7 +90,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderProgram.Activate();
 		glUniform1f(uniID1, swapUniform());
-		glBindTexture(GL_TEXTURE_2D, textures);
+		texture.Bind();
 		vao.Bind();
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
@@ -111,7 +100,7 @@ int main() {
 	vao.Delete();
 	vbo.Delete();
 	ebo.Delete();
-	glDeleteTextures(1, &textures);
+	texture.Delete();
 	shaderProgram.Delete();
 
 	glfwDestroyWindow(window);
