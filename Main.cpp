@@ -5,25 +5,23 @@
 #include "VAO.h"
 #include "VBO.h"
 #include "EBO.h"
+#include "Texture2D.h"
 
 GLfloat vertices[] =
-{ //               COORDINATES                  /     COLORS           //
-	-0.5f, -0.5f * float(sqrt(3)) * 1 / 3, 0.0f,     0.8f, 0.3f,  0.02f, // Lower left corner
-	 0.5f, -0.5f * float(sqrt(3)) * 1 / 3, 0.0f,     0.8f, 0.3f,  0.02f, // Lower right corner
-	 0.0f,  0.5f * float(sqrt(3)) * 2 / 3, 0.0f,     1.0f, 0.6f,  0.32f, // Upper corner
-	-0.25f, 0.5f * float(sqrt(3)) * 1 / 6, 0.0f,     0.9f, 0.45f, 0.17f, // Inner left
-	 0.25f, 0.5f * float(sqrt(3)) * 1 / 6, 0.0f,     0.9f, 0.45f, 0.17f, // Inner right
-	 0.0f, -0.5f * float(sqrt(3)) * 1 / 3, 0.0f,     0.8f, 0.3f,  0.02f  // Inner down
+{ // COORDINATES           /     COLORS           //
+	-0.5f,  0.5f, 0.0f,     1.0f, 0.0f,  0.0f,    0.0f, 0.0f,// Canto superior esquerdo
+	 0.5f,  0.5f, 0.0f,    0.0f, 0.0f,  1.0f,    0.0f, 1.0f,// Canto superior direito
+	-0.5f, -0.5f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f,// Canto inferior esquerdo
+	 0.5f, -0.5f, 0.0f,    0.0f, 1.0f,  0.0f,   1.0f, 0.0f// Canto inferior direito
 };
 
 GLuint indices[] =
 {
-	0, 3, 5, // Lower left triangle
-	3, 2, 4, // Upper triangle
-	5, 4, 1 // Lower right triangle
+	2, 3, 1, // Triângulo inferior
+	0, 2, 1, // Triângulo superior
 };
 
-float swapUniform() {
+double swapUniform() {
 	return sin(glfwGetTime());
 }
 
@@ -49,24 +47,42 @@ int main() {
 	glViewport(0, 0, 800, 800);
 	
 	float r, g, b;
-	r = 0.25f;
-	g = 0.33f;
-	b = 0.75f;
+	r = 1.0f;
+	g = 1.0f;
+	b = 1.0f;
 
 	VFShader shaderProgram = VFShader("default.vert", "default.frag");
 	GLuint uniID1 = glGetUniformLocation(shaderProgram.ID, "scale");
-	 
+	GLuint tex0Uni = glGetUniformLocation(shaderProgram.ID, "tex0");
+	shaderProgram.Activate();
+	glUniform1i(tex0Uni, 0);
+
 	VAO vao;
 	vao.Bind();
 
 	VBO vbo(vertices, sizeof(vertices));
 	EBO ebo(indices, sizeof(indices));
 
-	vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, 6 * sizeof(float), (void*)0); //Positions
-	vao.LinkAttrib(vbo, 1, 3, GL_FLOAT, 6 * sizeof(float), (void*)(3*sizeof(float))); //Colors
+	vao.LinkAttrib(vbo, 0, 3, GL_FLOAT, 8 * sizeof(float), (void*)0); //Positions
+	vao.LinkAttrib(vbo, 1, 3, GL_FLOAT, 8 * sizeof(float), (void*)(3*sizeof(float))); //Colors
+	vao.LinkAttrib(vbo, 2, 2, GL_FLOAT, 8 * sizeof(float), (void*)(6*sizeof(float))); //Colors
 	vao.Unbind();
 	vbo.Unbind();
 	ebo.Unbind();
+
+	//Textures
+	Texture2D texture("texture1.jpeg", 0);
+	texture.SetActive(0);
+	texture.Bind();
+
+	texture.Parameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	texture.Parameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	texture.Parameter(GL_TEXTURE_WRAP_S, GL_REPEAT);
+	texture.Parameter(GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	//Texture parameters
+	texture.SpecifyTex(0, 0, GL_RGB, GL_RGB);
+	texture.Unbind();
 
 	//Loop de atualização da janela
 	while (!glfwWindowShouldClose(window)) {
@@ -74,8 +90,9 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 		shaderProgram.Activate();
 		glUniform1f(uniID1, swapUniform());
+		texture.Bind();
 		vao.Bind();
-		glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -83,6 +100,7 @@ int main() {
 	vao.Delete();
 	vbo.Delete();
 	ebo.Delete();
+	texture.Delete();
 	shaderProgram.Delete();
 
 	glfwDestroyWindow(window);
